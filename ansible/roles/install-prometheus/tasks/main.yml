@@ -1,0 +1,104 @@
+---
+# https://docs.ansible.com/ansible/latest/collections/ansible/builtin/file_module.html
+- name: create download directory
+  file:
+    path: /tmp/prometheus
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: '0755'
+
+- name: create etc /etc/prometheus directory
+  file:
+    path: /etc/prometheus
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: '0755'
+
+- name: create /var/lib/prometheus directory
+  file:
+    path: /var/lib/prometheus
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: '0755'
+
+# https://docs.ansible.com/ansible/latest/collections/ansible/builtin/unarchive_module.html
+- name: download prometheus
+  environment:
+    PROMETHEUS_VERSION: "2.21.0"
+  unarchive:
+    src: https://github.com/prometheus/prometheus/releases/download/v${PROMETHEUS_VERSION}/prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz
+    dest: /tmp/prometheus
+    extra_opts: ['--strip-components=1', '--show-stored-names']
+    remote_src: yes
+
+# https://docs.ansible.com/ansible/latest/collections/ansible/builtin/copy_module.html
+- name: copy prometheus binary
+  environment:
+    PROMETHEUS_VERSION: "2.21.0"
+  copy:
+    src: /tmp/prometheus/prometheus
+    dest: /usr/local/bin/prometheus
+    owner: prometheus
+    group: prometheus
+    mode: a+x
+    remote_src: yes
+
+- name: copy promtool binary
+  environment:
+    PROMETHEUS_VERSION: "2.21.0"
+  copy:
+    src: /tmp/prometheus/promtool
+    dest: /usr/local/bin/promtool
+    owner: prometheus
+    group: prometheus
+    mode: a+x
+    remote_src: yes
+
+- name: move consoles to etc
+  copy:
+    src: /tmp/prometheus/consoles
+    dest: /etc/prometheus/
+    owner: prometheus
+    group: prometheus
+    mode: '0755'
+    remote_src: yes
+
+- name: move consoles_library dir to etc
+  copy:
+    src: /tmp/prometheus/console_libraries
+    dest: /etc/prometheus/
+    owner: prometheus
+    group: prometheus
+    mode: '0755'
+    remote_src: yes
+
+- name: copy prometheus.yml to host
+  copy:
+    src: prometheus/prometheus.yml
+    dest: /etc/prometheus/prometheus.yml
+    owner: prometheus
+    group: prometheus
+    mode: '0644'
+
+- name: copy prometheus systemd unit
+  copy:
+    src: prometheus/prometheus.service
+    dest: /etc/systemd/system/prometheus.service
+    owner: root
+    group: root
+
+# https://docs.ansible.com/ansible/latest/collections/ansible/builtin/systemd_module.html
+- name: enable and start prometheus
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    enabled: yes
+    name: prometheus
+
+- name: cleanup download directory
+  file:
+    path: /tmp/prometheus
+    state: absent

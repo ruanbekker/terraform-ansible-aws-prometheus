@@ -1,0 +1,9 @@
+---
+- name: install prometheus and thanos sidecar
+  hosts: all
+  become: yes
+  become_user: root
+  roles:
+    - create-prometheus-user
+    - install-prometheus
+    - install-thanos-sidecar

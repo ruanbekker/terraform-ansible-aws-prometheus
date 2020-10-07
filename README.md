@@ -3,7 +3,9 @@ Setup Prometheus with Thanos Sidecar on AWS using Terraform and Ansible
 
 ## Pre-Requirements
 
-1. I am spinning up a EC2 instance in a Private Subnet and only reachable via a bastion host, that is called `dev-jump-host`, which I've setup in my `~/.ssh/config` as:
+1. I am spinning up a EC2 instance in a Private Subnet and only reachable via a bastion host, that is called `dev-jump-host`, which ansible will also use to deploy the software on the target instance. 
+
+Which I've setup in my `~/.ssh/config` as:
 
 ```
 Host *
